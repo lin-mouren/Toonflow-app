@@ -1,8 +1,8 @@
 # Governance Snapshot: lin-mouren/Toonflow-app
 
 Generated at:
-- Local time: 2026-03-05 20:59:16 CST
-- UTC time: 2026-03-05T12:59:16Z
+- Local time: 2026-03-05 21:26:11 CST
+- UTC time: 2026-03-05T13:26:11Z
 
 ## Repository settings
 
@@ -33,7 +33,7 @@ Generated at:
 - upstream repository: `HBAI-Ltd/Toonflow-app`
 - upstream default branch: `master`
 - compare status (`mirror/upstream-main...main`): `ahead`
-- compare ahead_by: `14`
+- compare ahead_by: `16`
 - compare behind_by: `0`
 - mirror sha: `641c98037c4f6cb95dff7c98addfadb88cf454ca`
 - upstream sha: `641c98037c4f6cb95dff7c98addfadb88cf454ca`
@@ -45,6 +45,6 @@ Generated at:
 - secret_scanning_push_protection: `enabled`
 - dependabot_security_updates: `enabled`
 - production_environment_exists: `true`
-- production_can_admins_bypass: `true`
+- production_can_admins_bypass: `false`
 - production_branch_policy: `{"custom_branch_policies":false,"protected_branches":true}`
-- production_has_required_reviewers: `false`
+- production_has_required_reviewers: `true`
