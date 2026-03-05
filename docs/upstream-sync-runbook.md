@@ -64,16 +64,19 @@ Workflows:
 
 ## Drill execution record (2026-03-06)
 
-- Code path landed on `main` via PR #12 (merge commit `02a1bb818e62a1a9b23b4a68958e757e822f8799`).
-- Dispatch execution was blocked by GitHub incident:
-  - GitHub status: `Partial System Outage`
-  - Components: `Actions=major_outage`, `Webhooks=major_outage`
-- Deferred verification command when platform recovers:
-
-```bash
-gh workflow run .github/workflows/upstream-sync.yml \
-  -R lin-mouren/Toonflow-app --ref main -f drill_ff_failure=true
-```
+- Code path landed on `main` via:
+  - PR #12 (`02a1bb818e62a1a9b23b4a68958e757e822f8799`)
+  - PR #15 (`3f8d24746557ecc3d785d1fdfb96cedf43596aed`) to fix `gh` repo context in non-checkout jobs.
+- Drill run completed:
+  - Workflow run: `22730995682` (expected `failure`, because break-glass job exits `1` by design)
+  - URL: `https://github.com/lin-mouren/Toonflow-app/actions/runs/22730995682`
+- Validation results:
+  - break-glass drill issue created: #16
+  - webhook fan-out: `Webhook status: sent`
+  - mirror unchanged: `origin/mirror/upstream-main` SHA unchanged
+  - no `mirror/upstream-main -> main` PR noise created
+- Drill issue was closed after verification:
+  - `https://github.com/lin-mouren/Toonflow-app/issues/16`
 
 ## Governance baseline and snapshot
 

@@ -26,7 +26,7 @@ This document operationalizes pending production hardening tasks while the repos
 - upstream sync drill capability is implemented in `.github/workflows/upstream-sync.yml` (`drill_ff_failure`).
 - release rollback runbook exists at `docs/release-rollback-runbook.md`.
 - upstream ff failure fan-out is configured via issue + owner mention + webhook secret `UPSTREAM_SYNC_ALERT_WEBHOOK_URL`.
-- rehearsal release tag `v0.0.0-alpha.1` was created for production-gate validation.
+- rehearsal release tag `v0.0.0-alpha.1` completed end-to-end production gate validation.
 
 ## P0: Deployment environment protection
 
@@ -108,19 +108,22 @@ Validation:
 - FF failure creates/updates an issue with run URL and remediation steps.
 - On-call owner receives notification within SLA.
 
-## Open blocker (platform incident)
+## Closure evidence (2026-03-06)
 
-As of 2026-03-06, GitHub status reports:
-- overall: `Partial System Outage`
-- components: `Actions=major_outage`, `Webhooks=major_outage`
+1. Release rehearsal
+- tag: `v0.0.0-alpha.1`
+- workflow run: `22728142335`
+- run URL: `https://github.com/lin-mouren/Toonflow-app/actions/runs/22728142335`
+- production environment approval completed by required reviewer
+- GitHub Release created with multi-platform artifacts:
+  - `https://github.com/lin-mouren/Toonflow-app/releases/tag/v0.0.0-alpha.1`
 
-Impact:
-- `workflow_dispatch` calls return HTTP 500.
-- new workflow runs are not being created for current push/tag events.
-
-Deferred closure items after incident recovery:
-1. run upstream drill (`drill_ff_failure=true`) and verify issue + webhook delivery.
-2. re-run release rehearsal with next alpha tag and verify production approval gate + release artifacts.
+2. Upstream drill rehearsal
+- workflow run: `22730995682` (expected failure path)
+- run URL: `https://github.com/lin-mouren/Toonflow-app/actions/runs/22730995682`
+- drill issue: `#16` (created then closed after verification)
+- webhook fan-out: `Webhook status: sent`
+- mirror branch integrity: unchanged SHA before/after drill
 
 ## Operations cadence
 
