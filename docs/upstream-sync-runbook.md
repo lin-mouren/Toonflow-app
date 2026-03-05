@@ -59,6 +59,22 @@ Workflows:
 - fast-forward syncs mirror from upstream
 - creates or updates a PR from mirror to main when there are upstream deltas
 
+## Governance baseline and snapshot
+
+Apply personal-repo governance baseline:
+
+```bash
+./scripts/github/apply-personal-branch-baseline.sh lin-mouren/Toonflow-app
+```
+
+Generate a timestamped governance snapshot:
+
+```bash
+./scripts/github/snapshot-governance-state.sh lin-mouren/Toonflow-app
+```
+
+The output file is written to `docs/governance-snapshot-YYYY-MM-DD.md`.
+
 ## Break-glass (non-fast-forward upstream rewrite)
 
 Trigger:
@@ -80,3 +96,6 @@ git push --force-with-lease origin mirror/upstream-main
 ## Important limitation (personal repository)
 
 For personal repositories, GitHub does not support branch-protection push restrictions for specific actors (users/teams/apps). Because of this, enforcing "only GitHub Actions can push mirror" cannot be made strict via branch protection alone. If strict actor-level push restriction is required, move the repository to an organization and use rulesets/actor restrictions there.
+
+For production-readiness tasks (deployment environment protection, secrets hardening, release traceability), follow:
+- `docs/production-readiness-checklist.md`
