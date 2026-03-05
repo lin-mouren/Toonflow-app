@@ -7,6 +7,9 @@ This runbook defines the rollback path for releases produced by `.github/workflo
 - Use an account with permission to create tags and releases.
 - Confirm a rollback owner (`lin-mouren`) and communication channel before execution.
 - Do not delete existing release tags as first response; prefer forward rollback via a new tag.
+- Confirm GitHub platform health for release orchestration:
+  - [https://www.githubstatus.com](https://www.githubstatus.com)
+  - `Actions` and `Webhooks` should be `operational` before running rollback/rehearsal.
 
 ## Identify rollback target
 
@@ -59,3 +62,9 @@ gh run list -R lin-mouren/Toonflow-app --workflow "Build and Release" --limit 5
 1. Open a fix PR on `main` for root cause.
 2. Prepare next normal release tag after fix verification.
 3. Keep rollback issue open until fix release is live.
+
+## Rehearsal note (2026-03-06)
+
+- Rehearsal tag `v0.0.0-alpha.1` was pushed to validate production deployment gate.
+- During that window, GitHub reported `Actions=major_outage` and `Webhooks=major_outage`, so release workflow runs were not created.
+- Use the next incremental alpha tag (for example `v0.0.0-alpha.2`) after incident recovery to complete rehearsal evidence capture.

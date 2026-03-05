@@ -56,9 +56,24 @@ Workflows:
 
 `upstream-sync.yml`:
 - runs on schedule and on manual dispatch
+- supports drill mode via `workflow_dispatch` input `drill_ff_failure=true`
 - fast-forward syncs mirror from upstream
 - creates or updates a PR from mirror to main when there are upstream deltas
 - on ff-only failure: opens/updates a break-glass issue, notifies `@lin-mouren`, and marks workflow failed
+- drill mode simulates ff-failure without pushing to `mirror/upstream-main`
+
+## Drill execution record (2026-03-06)
+
+- Code path landed on `main` via PR #12 (merge commit `02a1bb818e62a1a9b23b4a68958e757e822f8799`).
+- Dispatch execution was blocked by GitHub incident:
+  - GitHub status: `Partial System Outage`
+  - Components: `Actions=major_outage`, `Webhooks=major_outage`
+- Deferred verification command when platform recovers:
+
+```bash
+gh workflow run .github/workflows/upstream-sync.yml \
+  -R lin-mouren/Toonflow-app --ref main -f drill_ff_failure=true
+```
 
 ## Governance baseline and snapshot
 
@@ -110,4 +125,4 @@ To send break-glass alerts to external systems (Slack/Webhook), set:
 gh secret set UPSTREAM_SYNC_ALERT_WEBHOOK_URL -R lin-mouren/Toonflow-app
 ```
 
-The workflow sends a JSON payload containing `repo`, `reason`, `upstream_sha`, `mirror_sha`, `run_url`, and `issue_url`.
+The workflow sends a JSON payload containing `repo`, `drill`, `reason`, `upstream_sha`, `mirror_sha`, `run_url`, and `issue_url`.

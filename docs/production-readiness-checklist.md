@@ -9,18 +9,24 @@ This document operationalizes pending production hardening tasks while the repos
 - Branch model: `main` + `mirror/upstream-main`
 - Current policy: no strict actor-level mirror push restriction
 
-## Current status (as of 2026-03-05)
+## Current status (as of 2026-03-06)
 
 - `issues` is enabled (`has_issues=true`) for break-glass incident tracking.
-- `production` environment has been created with `protected_branches=true`.
+- `production` environment has been created.
+- `production` deployment branch policy is now `custom_branch_policies=true`.
+- `production` deployment sources are restricted to:
+  - `main` (branch)
+  - `v*` (tag)
 - `production` required reviewer is configured (`lin-mouren`).
 - `production` admin bypass is disabled (`can_admins_bypass=false`).
 - `secret_scanning` and `secret_scanning_push_protection` are enabled.
 - `dependabot_security_updates` is enabled.
 - default workflow token permission is `read`; write permissions are job-scoped.
 - `main` protection now requires `1` approval with CODEOWNERS review.
+- upstream sync drill capability is implemented in `.github/workflows/upstream-sync.yml` (`drill_ff_failure`).
 - release rollback runbook exists at `docs/release-rollback-runbook.md`.
-- upstream ff failure fan-out is configured via issue + owner mention + optional webhook secret `UPSTREAM_SYNC_ALERT_WEBHOOK_URL`.
+- upstream ff failure fan-out is configured via issue + owner mention + webhook secret `UPSTREAM_SYNC_ALERT_WEBHOOK_URL`.
+- rehearsal release tag `v0.0.0-alpha.1` was created for production-gate validation.
 
 ## P0: Deployment environment protection
 
@@ -101,6 +107,20 @@ Actions:
 Validation:
 - FF failure creates/updates an issue with run URL and remediation steps.
 - On-call owner receives notification within SLA.
+
+## Open blocker (platform incident)
+
+As of 2026-03-06, GitHub status reports:
+- overall: `Partial System Outage`
+- components: `Actions=major_outage`, `Webhooks=major_outage`
+
+Impact:
+- `workflow_dispatch` calls return HTTP 500.
+- new workflow runs are not being created for current push/tag events.
+
+Deferred closure items after incident recovery:
+1. run upstream drill (`drill_ff_failure=true`) and verify issue + webhook delivery.
+2. re-run release rehearsal with next alpha tag and verify production approval gate + release artifacts.
 
 ## Operations cadence
 
