@@ -12,7 +12,8 @@ This document operationalizes pending production hardening tasks while the repos
 ## Current status (as of 2026-03-05)
 
 - `production` environment has been created with `protected_branches=true`.
-- `production` required reviewers are not configured yet.
+- `production` required reviewer is configured (`lin-mouren`).
+- `production` admin bypass is disabled (`can_admins_bypass=false`).
 - `secret_scanning` and `secret_scanning_push_protection` are enabled.
 - `dependabot_security_updates` is enabled.
 
