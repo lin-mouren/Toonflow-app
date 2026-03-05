@@ -36,6 +36,9 @@ export default router.post(
           manufacturer,
         },
       );
+      if (typeof videoPath !== "string" || videoPath.length === 0) {
+        throw new Error("Video generation returned an invalid file path");
+      }
       const url = await u.oss.getFileUrl(videoPath);
       res.status(200).send(success(url));
     } catch (err: any) {

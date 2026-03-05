@@ -1,0 +1,4 @@
+* @lin-mouren
+
+# Require explicit review for CI and sync automation changes.
+.github/workflows/* @lin-mouren
