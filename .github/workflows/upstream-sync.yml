@@ -136,6 +136,7 @@ jobs:
       MIRROR_SHA: ${{ needs.sync_mirror.outputs.mirror_sha }}
       REASON: ${{ needs.sync_mirror.outputs.ff_failure_reason }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      ALERT_WEBHOOK_URL: ${{ secrets.UPSTREAM_SYNC_ALERT_WEBHOOK_URL }}
     steps:
       - name: Open or update break-glass issue
         shell: bash
@@ -143,7 +144,9 @@ jobs:
           set -euo pipefail
 
           title="break-glass: mirror fast-forward failed"
+          owner_mention="@${GITHUB_REPOSITORY_OWNER}"
           body=$'The automated upstream mirror sync could not complete as fast-forward.\n\n'
+          body+=$'- Owner: '"$owner_mention"$'\n'
           body+=$'- Reason: `'"${REASON:-unknown}"$'`\n'
           body+=$'- Upstream branch: `'"${UPSTREAM_BRANCH:-unknown}"$'`\n'
           body+=$'- Upstream sha: `'"${UPSTREAM_SHA:-unknown}"$'`\n'
@@ -159,7 +162,41 @@ jobs:
 
           existing="$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')"
           if [[ -z "$existing" ]]; then
-            gh issue create --title "$title" --body "$body" --label "source:upstream"
+            issue_url="$(gh issue create --title "$title" --body "$body" --label "source:upstream")"
           else
             gh issue comment "$existing" --body "$body"
+            issue_url="$(gh issue view "$existing" --json url --jq '.url')"
           fi
+
+          webhook_status="skipped"
+          if [[ -n "${ALERT_WEBHOOK_URL:-}" ]]; then
+            payload="$(jq -n \
+              --arg repo "$GITHUB_REPOSITORY" \
+              --arg reason "${REASON:-unknown}" \
+              --arg upstream_branch "${UPSTREAM_BRANCH:-unknown}" \
+              --arg upstream_sha "${UPSTREAM_SHA:-unknown}" \
+              --arg mirror_sha "${MIRROR_SHA:-unknown}" \
+              --arg run_url "$RUN_URL" \
+              --arg issue_url "${issue_url:-}" \
+              --arg owner "$owner_mention" \
+              '{text: ("[upstream-sync] break-glass required for " + $repo), repo: $repo, owner: $owner, reason: $reason, upstream_branch: $upstream_branch, upstream_sha: $upstream_sha, mirror_sha: $mirror_sha, run_url: $run_url, issue_url: $issue_url}')"
+            if curl -fsSL -X POST -H "Content-Type: application/json" --data "$payload" "$ALERT_WEBHOOK_URL" >/dev/null; then
+              webhook_status="sent"
+            else
+              webhook_status="failed"
+            fi
+          fi
+
+          {
+            echo "### Break-glass required"
+            echo "- Owner: ${owner_mention}"
+            echo "- Reason: \`${REASON:-unknown}\`"
+            echo "- Upstream: \`${UPSTREAM_BRANCH:-unknown}@${UPSTREAM_SHA:-unknown}\`"
+            echo "- Mirror sha: \`${MIRROR_SHA:-unknown}\`"
+            echo "- Issue: ${issue_url:-n/a}"
+            echo "- Webhook status: ${webhook_status}"
+            echo "- Run: ${RUN_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Keep the workflow red on ff-only failures even after notifications.
+          exit 1

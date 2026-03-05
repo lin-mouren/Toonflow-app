@@ -34,6 +34,7 @@ fi
 echo "Applying repository settings to ${REPO} ..."
 gh api -X PATCH "repos/${REPO}" \
   -f default_branch=main \
+  -F has_issues=true \
   -F allow_merge_commit=true \
   -F allow_squash_merge=false \
   -F allow_rebase_merge=false \
@@ -41,7 +42,7 @@ gh api -X PATCH "repos/${REPO}" \
 
 echo "Ensuring workflow token permissions ..."
 gh api -X PUT "repos/${REPO}/actions/permissions/workflow" \
-  -f default_workflow_permissions=write \
+  -f default_workflow_permissions=read \
   -F can_approve_pull_request_reviews=true >/dev/null
 
 tmp_main="$(mktemp)"
@@ -58,7 +59,7 @@ cat >"$tmp_main" <<'JSON'
   "enforce_admins": true,
   "required_pull_request_reviews": {
     "dismiss_stale_reviews": false,
-    "require_code_owner_reviews": false,
+    "require_code_owner_reviews": true,
     "required_approving_review_count": 1,
     "require_last_push_approval": false
   },

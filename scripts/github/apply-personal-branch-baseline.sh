@@ -33,6 +33,7 @@ fi
 echo "Applying personal-repo governance baseline to ${REPO} ..."
 gh api -X PATCH "repos/${REPO}" \
   -f default_branch=main \
+  -F has_issues=true \
   -F allow_merge_commit=true \
   -F allow_squash_merge=false \
   -F allow_rebase_merge=false \
@@ -40,7 +41,7 @@ gh api -X PATCH "repos/${REPO}" \
 
 echo "Ensuring workflow token permissions (required for mirror sync push) ..."
 gh api -X PUT "repos/${REPO}/actions/permissions/workflow" \
-  -f default_workflow_permissions=write \
+  -f default_workflow_permissions=read \
   -F can_approve_pull_request_reviews=true >/dev/null
 
 tmp_main="$(mktemp)"
@@ -57,8 +58,8 @@ cat >"$tmp_main" <<'JSON'
   "enforce_admins": true,
   "required_pull_request_reviews": {
     "dismiss_stale_reviews": false,
-    "require_code_owner_reviews": false,
-    "required_approving_review_count": 0,
+    "require_code_owner_reviews": true,
+    "required_approving_review_count": 1,
     "require_last_push_approval": false
   },
   "restrictions": null,
@@ -104,7 +105,7 @@ cat >"$tmp_master" <<'JSON'
 }
 JSON
 
-echo "Protecting main (PR gate + CI required, review count=0) ..."
+echo "Protecting main (PR gate + CI required, review count=1 + CODEOWNERS) ..."
 gh api -X PUT "repos/${REPO}/branches/main/protection" \
   -H "Accept: application/vnd.github+json" \
   --input "$tmp_main" >/dev/null
