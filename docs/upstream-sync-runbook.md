@@ -58,6 +58,7 @@ Workflows:
 - runs on schedule and on manual dispatch
 - fast-forward syncs mirror from upstream
 - creates or updates a PR from mirror to main when there are upstream deltas
+- on ff-only failure: opens/updates a break-glass issue, notifies `@lin-mouren`, and marks workflow failed
 
 ## Governance baseline and snapshot
 
@@ -99,3 +100,14 @@ For personal repositories, GitHub does not support branch-protection push restri
 
 For production-readiness tasks (deployment environment protection, secrets hardening, release traceability), follow:
 - `docs/production-readiness-checklist.md`
+- `docs/release-rollback-runbook.md`
+
+## Optional external notification fan-out
+
+To send break-glass alerts to external systems (Slack/Webhook), set:
+
+```bash
+gh secret set UPSTREAM_SYNC_ALERT_WEBHOOK_URL -R lin-mouren/Toonflow-app
+```
+
+The workflow sends a JSON payload containing `repo`, `reason`, `upstream_sha`, `mirror_sha`, `run_url`, and `issue_url`.

@@ -1,8 +1,8 @@
 # Governance Snapshot: lin-mouren/Toonflow-app
 
 Generated at:
-- Local time: 2026-03-05 21:26:11 CST
-- UTC time: 2026-03-05T13:26:11Z
+- Local time: 2026-03-05 23:59:23 CST
+- UTC time: 2026-03-05T15:59:23Z
 
 ## Repository settings
 
@@ -11,10 +11,13 @@ Generated at:
 - rebase_merge_allowed: `false`
 - squash_merge_allowed: `false`
 - delete_branch_on_merge: `true`
+- has_issues: `true`
+- default_workflow_permissions: `read`
 
 ## Branch protection: main
 
-- required_approving_review_count: `0`
+- required_approving_review_count: `1`
+- require_code_owner_reviews: `true`
 - required_status_checks: `lint, build`
 - enforce_admins: `true`
 - allow_force_pushes: `false`
@@ -33,7 +36,7 @@ Generated at:
 - upstream repository: `HBAI-Ltd/Toonflow-app`
 - upstream default branch: `master`
 - compare status (`mirror/upstream-main...main`): `ahead`
-- compare ahead_by: `16`
+- compare ahead_by: `18`
 - compare behind_by: `0`
 - mirror sha: `641c98037c4f6cb95dff7c98addfadb88cf454ca`
 - upstream sha: `641c98037c4f6cb95dff7c98addfadb88cf454ca`

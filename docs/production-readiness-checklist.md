@@ -11,11 +11,16 @@ This document operationalizes pending production hardening tasks while the repos
 
 ## Current status (as of 2026-03-05)
 
+- `issues` is enabled (`has_issues=true`) for break-glass incident tracking.
 - `production` environment has been created with `protected_branches=true`.
 - `production` required reviewer is configured (`lin-mouren`).
 - `production` admin bypass is disabled (`can_admins_bypass=false`).
 - `secret_scanning` and `secret_scanning_push_protection` are enabled.
 - `dependabot_security_updates` is enabled.
+- default workflow token permission is `read`; write permissions are job-scoped.
+- `main` protection now requires `1` approval with CODEOWNERS review.
+- release rollback runbook exists at `docs/release-rollback-runbook.md`.
+- upstream ff failure fan-out is configured via issue + owner mention + optional webhook secret `UPSTREAM_SYNC_ALERT_WEBHOOK_URL`.
 
 ## P0: Deployment environment protection
 
@@ -70,7 +75,7 @@ Validation:
 Goal: start fast with 0-approval gate, then raise review strength at production milestone.
 
 Current:
-- `main` required approvals: `0`
+- `main` required approvals: `1`
 - required checks: `lint`, `build`
 
 Upgrade path:

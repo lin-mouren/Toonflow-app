@@ -37,13 +37,16 @@ merge_commit_allowed="$(gh repo view "$REPO" --json mergeCommitAllowed --jq '.me
 rebase_merge_allowed="$(gh repo view "$REPO" --json rebaseMergeAllowed --jq '.rebaseMergeAllowed')"
 squash_merge_allowed="$(gh repo view "$REPO" --json squashMergeAllowed --jq '.squashMergeAllowed')"
 delete_branch_on_merge="$(gh repo view "$REPO" --json deleteBranchOnMerge --jq '.deleteBranchOnMerge')"
+has_issues="$(gh api "repos/${REPO}" --jq '.has_issues')"
 
 main_required_reviews="$(gh api "repos/${REPO}/branches/main/protection" --jq '.required_pull_request_reviews.required_approving_review_count')"
+main_require_code_owner_reviews="$(gh api "repos/${REPO}/branches/main/protection" --jq '.required_pull_request_reviews.require_code_owner_reviews')"
 main_checks="$(gh api "repos/${REPO}/branches/main/protection" --jq '.required_status_checks.contexts | join(", ")')"
 main_enforce_admins="$(gh api "repos/${REPO}/branches/main/protection" --jq '.enforce_admins.enabled')"
 main_allow_force_pushes="$(gh api "repos/${REPO}/branches/main/protection" --jq '.allow_force_pushes.enabled')"
 main_allow_deletions="$(gh api "repos/${REPO}/branches/main/protection" --jq '.allow_deletions.enabled')"
 main_require_conversation_resolution="$(gh api "repos/${REPO}/branches/main/protection" --jq '.required_conversation_resolution.enabled')"
+default_workflow_permissions="$(gh api "repos/${REPO}/actions/permissions/workflow" --jq '.default_workflow_permissions')"
 
 mirror_enforce_admins="$(gh api "repos/${REPO}/branches/mirror%2Fupstream-main/protection" --jq '.enforce_admins.enabled')"
 mirror_allow_force_pushes="$(gh api "repos/${REPO}/branches/mirror%2Fupstream-main/protection" --jq '.allow_force_pushes.enabled')"
@@ -89,10 +92,13 @@ Generated at:
 - rebase_merge_allowed: \`${rebase_merge_allowed}\`
 - squash_merge_allowed: \`${squash_merge_allowed}\`
 - delete_branch_on_merge: \`${delete_branch_on_merge}\`
+- has_issues: \`${has_issues}\`
+- default_workflow_permissions: \`${default_workflow_permissions}\`
 
 ## Branch protection: main
 
 - required_approving_review_count: \`${main_required_reviews}\`
+- require_code_owner_reviews: \`${main_require_code_owner_reviews}\`
 - required_status_checks: \`${main_checks}\`
 - enforce_admins: \`${main_enforce_admins}\`
 - allow_force_pushes: \`${main_allow_force_pushes}\`
