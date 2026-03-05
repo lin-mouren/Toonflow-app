@@ -15,11 +15,13 @@ jobs:
     permissions:
       contents: write
     outputs:
+      upstream_branch: ${{ steps.sync.outputs.upstream_branch }}
       upstream_sha: ${{ steps.sync.outputs.upstream_sha }}
       mirror_sha: ${{ steps.sync.outputs.mirror_sha }}
       ff_ok: ${{ steps.sync.outputs.ff_ok }}
+      ff_failure_reason: ${{ steps.sync.outputs.ff_failure_reason }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
@@ -37,8 +39,15 @@ jobs:
             git remote add upstream https://github.com/HBAI-Ltd/Toonflow-app.git
           fi
 
-          git fetch --no-tags upstream master
-          upstream_sha="$(git rev-parse upstream/master)"
+          upstream_branch="$(git ls-remote --symref upstream HEAD | awk '/^ref:/ {sub("refs/heads/","",$2); print $2; exit}')"
+          if [[ -z "$upstream_branch" ]]; then
+            upstream_branch="master"
+          fi
+          echo "upstream_branch=$upstream_branch" >> "$GITHUB_OUTPUT"
+
+          git fetch --no-tags upstream "$upstream_branch"
+          upstream_ref="upstream/$upstream_branch"
+          upstream_sha="$(git rev-parse "$upstream_ref")"
           echo "upstream_sha=$upstream_sha" >> "$GITHUB_OUTPUT"
 
           if git ls-remote --exit-code --heads origin mirror/upstream-main >/dev/null 2>&1; then
@@ -46,17 +55,28 @@ jobs:
             git switch --detach origin/mirror/upstream-main
             git switch -c mirror/upstream-main
           else
-            git switch --detach upstream/master
+            git switch --detach "$upstream_ref"
             git switch -c mirror/upstream-main
           fi
 
           # Hard requirement: mirror only accepts fast-forward from upstream.
-          git merge --ff-only upstream/master
+          if ! git merge-base --is-ancestor HEAD "$upstream_ref"; then
+            echo "ff_ok=false" >> "$GITHUB_OUTPUT"
+            echo "ff_failure_reason=mirror branch is not an ancestor of $upstream_ref" >> "$GITHUB_OUTPUT"
+            echo "mirror_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git merge --ff-only "$upstream_ref"
           mirror_sha="$(git rev-parse HEAD)"
           echo "mirror_sha=$mirror_sha" >> "$GITHUB_OUTPUT"
-          echo "ff_ok=true" >> "$GITHUB_OUTPUT"
 
-          git push origin HEAD:refs/heads/mirror/upstream-main
+          if git push origin HEAD:refs/heads/mirror/upstream-main; then
+            echo "ff_ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ff_ok=false" >> "$GITHUB_OUTPUT"
+            echo "ff_failure_reason=push to origin/mirror/upstream-main failed" >> "$GITHUB_OUTPUT"
+          fi
 
   ensure_pr:
     runs-on: ubuntu-latest
@@ -66,10 +86,12 @@ jobs:
     permissions:
       pull-requests: write
       contents: read
+      issues: write
     env:
       GH_TOKEN: ${{ github.token }}
       BASE: main
       HEAD: mirror/upstream-main
+      UPSTREAM_BRANCH: ${{ needs.sync_mirror.outputs.upstream_branch }}
       UPSTREAM_SHA: ${{ needs.sync_mirror.outputs.upstream_sha }}
     steps:
       - name: Create or reuse PR (mirror -> main)
@@ -85,14 +107,59 @@ jobs:
             exit 0
           fi
 
+          gh label create "source:upstream" --color "1D76DB" --description "Automated upstream mirror sync PRs" || true
+
           existing="$(gh pr list --state open --base "$BASE" --head "$HEAD" --json number --jq '.[0].number')"
           title="chore(upstream): sync ${UPSTREAM_SHA:0:7}"
           body=$'Sync upstream -> mirror, then PR into main.\n\n'
-          body+=$'- Upstream: `HBAI-Ltd/Toonflow-app@'"$UPSTREAM_SHA"$'`\n'
+          body+=$'- Upstream: `HBAI-Ltd/Toonflow-app ('"$UPSTREAM_BRANCH"$') @ '"$UPSTREAM_SHA"$'`\n'
           body+=$'- Mirror: `'"$HEAD"$'`\n'
 
           if [[ -z "$existing" ]]; then
-            gh pr create --base "$BASE" --head "$HEAD" --title "$title" --body "$body"
+            gh pr create --base "$BASE" --head "$HEAD" --title "$title" --body "$body" --label "source:upstream"
           else
-            gh pr edit "$existing" --title "$title" --body "$body"
+            gh pr edit "$existing" --title "$title" --body "$body" --add-label "source:upstream"
+          fi
+
+  open_break_glass_issue:
+    runs-on: ubuntu-latest
+    needs:
+      - sync_mirror
+    if: needs.sync_mirror.outputs.ff_ok != 'true'
+    permissions:
+      issues: write
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      UPSTREAM_BRANCH: ${{ needs.sync_mirror.outputs.upstream_branch }}
+      UPSTREAM_SHA: ${{ needs.sync_mirror.outputs.upstream_sha }}
+      MIRROR_SHA: ${{ needs.sync_mirror.outputs.mirror_sha }}
+      REASON: ${{ needs.sync_mirror.outputs.ff_failure_reason }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Open or update break-glass issue
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          title="break-glass: mirror fast-forward failed"
+          body=$'The automated upstream mirror sync could not complete as fast-forward.\n\n'
+          body+=$'- Reason: `'"${REASON:-unknown}"$'`\n'
+          body+=$'- Upstream branch: `'"${UPSTREAM_BRANCH:-unknown}"$'`\n'
+          body+=$'- Upstream sha: `'"${UPSTREAM_SHA:-unknown}"$'`\n'
+          body+=$'- Mirror sha: `'"${MIRROR_SHA:-unknown}"$'`\n'
+          body+=$'- Run: '"$RUN_URL"$'\n\n'
+          body+=$'Break-glass runbook:\n'
+          body+=$'1. Temporarily allow force-push on `mirror/upstream-main`.\n'
+          body+=$'2. `git fetch --prune upstream && git checkout mirror/upstream-main && git reset --hard upstream/'"${UPSTREAM_BRANCH:-master}"$'`\n'
+          body+=$'3. `git push --force-with-lease origin mirror/upstream-main`\n'
+          body+=$'4. Disable force-push again.\n'
+
+          gh label create "source:upstream" --color "1D76DB" --description "Automated upstream mirror sync PRs" || true
+
+          existing="$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')"
+          if [[ -z "$existing" ]]; then
+            gh issue create --title "$title" --body "$body" --label "source:upstream"
+          else
+            gh issue comment "$existing" --body "$body"
           fi

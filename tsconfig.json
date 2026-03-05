@@ -17,5 +17,6 @@
     "incremental": true,
     "typeRoots": ["./node_modules/@types", "./types"],
     "resolveJsonModule": true
-  }
+  },
+  "exclude": ["backup", "build", "dist", "node_modules"]
 }
