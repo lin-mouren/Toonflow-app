@@ -58,6 +58,22 @@ upstream_default_branch="$(gh repo view "$UPSTREAM_REPO" --json defaultBranchRef
 mirror_sha="$(gh api "repos/${REPO}/git/ref/heads/mirror/upstream-main" --jq '.object.sha')"
 upstream_sha="$(gh api "repos/${UPSTREAM_REPO}/git/ref/heads/${upstream_default_branch}" --jq '.object.sha')"
 
+secret_scanning_status="$(gh api "repos/${REPO}" --jq '.security_and_analysis.secret_scanning.status // "unknown"')"
+secret_scanning_push_protection_status="$(gh api "repos/${REPO}" --jq '.security_and_analysis.secret_scanning_push_protection.status // "unknown"')"
+dependabot_security_updates_status="$(gh api "repos/${REPO}" --jq '.security_and_analysis.dependabot_security_updates.status // "unknown"')"
+
+if gh api "repos/${REPO}/environments/production" >/dev/null 2>&1; then
+  production_environment_exists="true"
+  production_can_admins_bypass="$(gh api "repos/${REPO}/environments/production" --jq '.can_admins_bypass')"
+  production_branch_policy="$(gh api "repos/${REPO}/environments/production" --jq '.deployment_branch_policy | tostring')"
+  production_has_required_reviewers="$(gh api "repos/${REPO}/environments/production" --jq 'any(.protection_rules[]?; .type == "required_reviewers")')"
+else
+  production_environment_exists="false"
+  production_can_admins_bypass="unknown"
+  production_branch_policy="unknown"
+  production_has_required_reviewers="unknown"
+fi
+
 mkdir -p "$(dirname "$OUT_FILE")"
 cat >"$OUT_FILE" <<EOF
 # Governance Snapshot: ${REPO}
@@ -100,6 +116,16 @@ Generated at:
 - mirror sha: \`${mirror_sha}\`
 - upstream sha: \`${upstream_sha}\`
 - mirror equals upstream: \`$([[ "$mirror_sha" == "$upstream_sha" ]] && echo true || echo false)\`
+
+## Security and deployment hardening status
+
+- secret_scanning: \`${secret_scanning_status}\`
+- secret_scanning_push_protection: \`${secret_scanning_push_protection_status}\`
+- dependabot_security_updates: \`${dependabot_security_updates_status}\`
+- production_environment_exists: \`${production_environment_exists}\`
+- production_can_admins_bypass: \`${production_can_admins_bypass}\`
+- production_branch_policy: \`${production_branch_policy}\`
+- production_has_required_reviewers: \`${production_has_required_reviewers}\`
 EOF
 
 echo "Wrote ${OUT_FILE}"

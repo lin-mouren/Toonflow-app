@@ -9,6 +9,13 @@ This document operationalizes pending production hardening tasks while the repos
 - Branch model: `main` + `mirror/upstream-main`
 - Current policy: no strict actor-level mirror push restriction
 
+## Current status (as of 2026-03-05)
+
+- `production` environment has been created with `protected_branches=true`.
+- `production` required reviewers are not configured yet.
+- `secret_scanning` and `secret_scanning_push_protection` are enabled.
+- `dependabot_security_updates` is still disabled.
+
 ## P0: Deployment environment protection
 
 Goal: block accidental production release without explicit approval.
