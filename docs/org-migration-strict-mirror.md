@@ -11,6 +11,8 @@ Use this flow after moving the repository to an Organization.
 - Result: task 1 can only be **partially** enforced right now.
   - Enforced now: no force-push/delete on `mirror/upstream-main`, automation-based ff-only sync workflow.
   - Not strictly enforceable now: "only GitHub Actions can push mirror."
+- Baseline script for current personal-repo mode:
+  - `./scripts/github/apply-personal-branch-baseline.sh lin-mouren/Toonflow-app`
 - To fully satisfy task 1, complete organization migration first, then apply org branch protection script.
 
 ## Target state
