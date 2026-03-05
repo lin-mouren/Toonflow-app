@@ -52,7 +52,7 @@ cat >"$tmp_main" <<'JSON'
 {
   "required_status_checks": {
     "strict": false,
-    "contexts": ["CI / lint", "CI / build"]
+    "contexts": ["lint", "build"]
   },
   "enforce_admins": true,
   "required_pull_request_reviews": {

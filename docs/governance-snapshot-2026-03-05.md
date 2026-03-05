@@ -1,8 +1,8 @@
 # Governance Snapshot: lin-mouren/Toonflow-app
 
 Generated at:
-- Local time: 2026-03-05 20:26:42 CST
-- UTC time: 2026-03-05T12:26:42Z
+- Local time: 2026-03-05 20:43:22 CST
+- UTC time: 2026-03-05T12:43:22Z
 
 ## Repository settings
 
@@ -15,7 +15,7 @@ Generated at:
 ## Branch protection: main
 
 - required_approving_review_count: `0`
-- required_status_checks: `CI / lint, CI / build`
+- required_status_checks: `lint, build`
 - enforce_admins: `true`
 - allow_force_pushes: `false`
 - allow_deletions: `false`

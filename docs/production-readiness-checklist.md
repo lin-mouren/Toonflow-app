@@ -63,7 +63,7 @@ Goal: start fast with 0-approval gate, then raise review strength at production 
 
 Current:
 - `main` required approvals: `0`
-- required checks: `CI / lint`, `CI / build`
+- required checks: `lint`, `build`
 
 Upgrade path:
 1. Move `required_approving_review_count` from `0` to `1`.
