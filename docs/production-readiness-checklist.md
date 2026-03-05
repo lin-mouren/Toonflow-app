@@ -14,7 +14,7 @@ This document operationalizes pending production hardening tasks while the repos
 - `production` environment has been created with `protected_branches=true`.
 - `production` required reviewers are not configured yet.
 - `secret_scanning` and `secret_scanning_push_protection` are enabled.
-- `dependabot_security_updates` is still disabled.
+- `dependabot_security_updates` is enabled.
 
 ## P0: Deployment environment protection
 
