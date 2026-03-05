@@ -111,6 +111,7 @@ jobs:
       issues: write
     env:
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
       BASE: main
       HEAD: mirror/upstream-main
       UPSTREAM_BRANCH: ${{ needs.sync_mirror.outputs.upstream_branch }}
@@ -129,18 +130,18 @@ jobs:
             exit 0
           fi
 
-          gh label create "source:upstream" --color "1D76DB" --description "Automated upstream mirror sync PRs" || true
+          gh label create "source:upstream" -R "$GH_REPO" --color "1D76DB" --description "Automated upstream mirror sync PRs" || true
 
-          existing="$(gh pr list --state open --base "$BASE" --head "$HEAD" --json number --jq '.[0].number')"
+          existing="$(gh pr list -R "$GH_REPO" --state open --base "$BASE" --head "$HEAD" --json number --jq '.[0].number')"
           title="chore(upstream): sync ${UPSTREAM_SHA:0:7}"
           body=$'Sync upstream -> mirror, then PR into main.\n\n'
           body+=$'- Upstream: `HBAI-Ltd/Toonflow-app ('"$UPSTREAM_BRANCH"$') @ '"$UPSTREAM_SHA"$'`\n'
           body+=$'- Mirror: `'"$HEAD"$'`\n'
 
           if [[ -z "$existing" ]]; then
-            gh pr create --base "$BASE" --head "$HEAD" --title "$title" --body "$body" --label "source:upstream"
+            gh pr create -R "$GH_REPO" --base "$BASE" --head "$HEAD" --title "$title" --body "$body" --label "source:upstream"
           else
-            gh pr edit "$existing" --title "$title" --body "$body" --add-label "source:upstream"
+            gh pr edit "$existing" -R "$GH_REPO" --title "$title" --body "$body" --add-label "source:upstream"
           fi
 
   open_break_glass_issue:
@@ -153,6 +154,7 @@ jobs:
       contents: read
     env:
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
       UPSTREAM_BRANCH: ${{ needs.sync_mirror.outputs.upstream_branch }}
       UPSTREAM_SHA: ${{ needs.sync_mirror.outputs.upstream_sha }}
       MIRROR_SHA: ${{ needs.sync_mirror.outputs.mirror_sha }}
@@ -189,14 +191,14 @@ jobs:
           body+=$'3. `git push --force-with-lease origin mirror/upstream-main`\n'
           body+=$'4. Disable force-push again.\n'
 
-          gh label create "source:upstream" --color "1D76DB" --description "Automated upstream mirror sync PRs" || true
+          gh label create "source:upstream" -R "$GH_REPO" --color "1D76DB" --description "Automated upstream mirror sync PRs" || true
 
-          existing="$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')"
+          existing="$(gh issue list -R "$GH_REPO" --state open --search "\"$title\" in:title" --json number --jq '.[0].number')"
           if [[ -z "$existing" ]]; then
-            issue_url="$(gh issue create --title "$title" --body "$body" --label "source:upstream")"
+            issue_url="$(gh issue create -R "$GH_REPO" --title "$title" --body "$body" --label "source:upstream")"
           else
-            gh issue comment "$existing" --body "$body"
-            issue_url="$(gh issue view "$existing" --json url --jq '.url')"
+            gh issue comment "$existing" -R "$GH_REPO" --body "$body"
+            issue_url="$(gh issue view "$existing" -R "$GH_REPO" --json url --jq '.url')"
           fi
 
           webhook_status="skipped"
