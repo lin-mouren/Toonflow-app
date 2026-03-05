@@ -65,6 +65,8 @@ gh run list -R lin-mouren/Toonflow-app --workflow "Build and Release" --limit 5
 
 ## Rehearsal note (2026-03-06)
 
-- Rehearsal tag `v0.0.0-alpha.1` was pushed to validate production deployment gate.
-- During that window, GitHub reported `Actions=major_outage` and `Webhooks=major_outage`, so release workflow runs were not created.
-- Use the next incremental alpha tag (for example `v0.0.0-alpha.2`) after incident recovery to complete rehearsal evidence capture.
+- Rehearsal tag `v0.0.0-alpha.1` was pushed and release workflow completed successfully.
+- Workflow run: `22728142335`
+- Run URL: `https://github.com/lin-mouren/Toonflow-app/actions/runs/22728142335`
+- Release URL: `https://github.com/lin-mouren/Toonflow-app/releases/tag/v0.0.0-alpha.1`
+- Production environment approval gate was exercised and approved before release job execution.
