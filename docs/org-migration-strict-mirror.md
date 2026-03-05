@@ -4,6 +4,15 @@ This guide is for enforcing **actor-level push restrictions** on `mirror/upstrea
 GitHub personal repositories cannot strictly enforce "only GitHub Actions can push this branch."
 Use this flow after moving the repository to an Organization.
 
+## Current status (as of 2026-03-05)
+
+- Current repo: `lin-mouren/Toonflow-app` (personal account).
+- Organization migration has not happened yet.
+- Result: task 1 can only be **partially** enforced right now.
+  - Enforced now: no force-push/delete on `mirror/upstream-main`, automation-based ff-only sync workflow.
+  - Not strictly enforceable now: "only GitHub Actions can push mirror."
+- To fully satisfy task 1, complete organization migration first, then apply org branch protection script.
+
 ## Target state
 
 - Repository owner is an Organization.
