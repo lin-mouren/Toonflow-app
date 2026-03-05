@@ -3,7 +3,13 @@ name: Upstream Sync
 on:
   schedule:
     - cron: "17 */3 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      drill_ff_failure:
+        description: "Simulate ff-only failure and run break-glass path without pushing mirror"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: upstream-sync
@@ -18,6 +24,7 @@ jobs:
       upstream_branch: ${{ steps.sync.outputs.upstream_branch }}
       upstream_sha: ${{ steps.sync.outputs.upstream_sha }}
       mirror_sha: ${{ steps.sync.outputs.mirror_sha }}
+      drill_mode: ${{ steps.sync.outputs.drill_mode }}
       ff_ok: ${{ steps.sync.outputs.ff_ok }}
       ff_failure_reason: ${{ steps.sync.outputs.ff_failure_reason }}
     steps:
@@ -27,8 +34,16 @@ jobs:
 
       - id: sync
         shell: bash
+        env:
+          DRILL_FF_FAILURE: ${{ github.event_name == 'workflow_dispatch' && inputs.drill_ff_failure || false }}
         run: |
           set -euo pipefail
+
+          drill_mode="false"
+          if [[ "${DRILL_FF_FAILURE}" == "true" ]]; then
+            drill_mode="true"
+          fi
+          echo "drill_mode=$drill_mode" >> "$GITHUB_OUTPUT"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -57,6 +72,13 @@ jobs:
           else
             git switch --detach "$upstream_ref"
             git switch -c mirror/upstream-main
+          fi
+
+          if [[ "$drill_mode" == "true" ]]; then
+            echo "ff_ok=false" >> "$GITHUB_OUTPUT"
+            echo "ff_failure_reason=drill: simulated ff failure" >> "$GITHUB_OUTPUT"
+            echo "mirror_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
           # Hard requirement: mirror only accepts fast-forward from upstream.
@@ -135,6 +157,7 @@ jobs:
       UPSTREAM_SHA: ${{ needs.sync_mirror.outputs.upstream_sha }}
       MIRROR_SHA: ${{ needs.sync_mirror.outputs.mirror_sha }}
       REASON: ${{ needs.sync_mirror.outputs.ff_failure_reason }}
+      DRILL_MODE: ${{ needs.sync_mirror.outputs.drill_mode }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       ALERT_WEBHOOK_URL: ${{ secrets.UPSTREAM_SYNC_ALERT_WEBHOOK_URL }}
     steps:
@@ -143,10 +166,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          title="break-glass: mirror fast-forward failed"
+          if [[ "${DRILL_MODE:-false}" == "true" ]]; then
+            title="break-glass(drill): mirror fast-forward failed"
+            intro="The upstream mirror break-glass drill was triggered intentionally."
+          else
+            title="break-glass: mirror fast-forward failed"
+            intro="The automated upstream mirror sync could not complete as fast-forward."
+          fi
+
           owner_mention="@${GITHUB_REPOSITORY_OWNER}"
-          body=$'The automated upstream mirror sync could not complete as fast-forward.\n\n'
+          body="$intro"$'\n\n'
           body+=$'- Owner: '"$owner_mention"$'\n'
+          body+=$'- Drill mode: `'"${DRILL_MODE:-false}"$'`\n'
           body+=$'- Reason: `'"${REASON:-unknown}"$'`\n'
           body+=$'- Upstream branch: `'"${UPSTREAM_BRANCH:-unknown}"$'`\n'
           body+=$'- Upstream sha: `'"${UPSTREAM_SHA:-unknown}"$'`\n'
@@ -179,17 +210,20 @@ jobs:
               --arg run_url "$RUN_URL" \
               --arg issue_url "${issue_url:-}" \
               --arg owner "$owner_mention" \
-              '{text: ("[upstream-sync] break-glass required for " + $repo), repo: $repo, owner: $owner, reason: $reason, upstream_branch: $upstream_branch, upstream_sha: $upstream_sha, mirror_sha: $mirror_sha, run_url: $run_url, issue_url: $issue_url}')"
+              --arg drill "${DRILL_MODE:-false}" \
+              '{text: ("[upstream-sync] break-glass required for " + $repo), repo: $repo, owner: $owner, drill: ($drill == "true"), reason: $reason, upstream_branch: $upstream_branch, upstream_sha: $upstream_sha, mirror_sha: $mirror_sha, run_url: $run_url, issue_url: $issue_url}')"
             if curl -fsSL -X POST -H "Content-Type: application/json" --data "$payload" "$ALERT_WEBHOOK_URL" >/dev/null; then
               webhook_status="sent"
             else
               webhook_status="failed"
             fi
           fi
+          echo "Webhook status: ${webhook_status}"
 
           {
             echo "### Break-glass required"
             echo "- Owner: ${owner_mention}"
+            echo "- Drill mode: \`${DRILL_MODE:-false}\`"
             echo "- Reason: \`${REASON:-unknown}\`"
             echo "- Upstream: \`${UPSTREAM_BRANCH:-unknown}@${UPSTREAM_SHA:-unknown}\`"
             echo "- Mirror sha: \`${MIRROR_SHA:-unknown}\`"
