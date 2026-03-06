@@ -27,6 +27,7 @@ This document operationalizes pending production hardening tasks while the repos
 - release rollback runbook exists at `docs/release-rollback-runbook.md`.
 - upstream ff failure fan-out is configured via issue + owner mention + webhook secret `UPSTREAM_SYNC_ALERT_WEBHOOK_URL`.
 - rehearsal release tag `v0.0.0-alpha.1` completed end-to-end production gate validation.
+- Dependabot open alerts: `0` (queried via API on 2026-03-06).
 
 ## P0: Deployment environment protection
 
@@ -124,6 +125,11 @@ Validation:
 - drill issue: `#16` (created then closed after verification)
 - webhook fan-out: `Webhook status: sent`
 - mirror branch integrity: unchanged SHA before/after drill
+
+3. Security closure
+- PR: `#21` (`chore(security): remove sqlite3 chain and refresh vulnerable transitives`)
+- merged commit: `4957eb53ed634c38f602558b244e7be4fbb9ec6c`
+- result: `dependabot alerts state=open` count is `0`
 
 ## Operations cadence
 
