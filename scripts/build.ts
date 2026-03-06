@@ -19,6 +19,7 @@ if (!fs.existsSync(envFile)) {
   console.log(`📄 已自动创建环境变量文件: ${envFile}`);
 }
 
+// Knex may reference optional sqlite3 dialect modules during bundling; keep sqlite3 external.
 const external = ["electron", "sqlite3", "better-sqlite3", "mysql", "mysql2", "pg", "pg-query-stream", "oracledb", "tedious", "mssql"];
 
 // 后端服务打包配置
