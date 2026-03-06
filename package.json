@@ -36,7 +36,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.35",
     "@ai-sdk/deepseek": "^2.0.17",
-    "@ai-sdk/devtools": "^0.0.11",
+    "@ai-sdk/devtools": "^0.0.15",
     "@ai-sdk/google": "^3.0.20",
     "@ai-sdk/openai": "^3.0.25",
     "@ai-sdk/openai-compatible": "^2.0.27",
@@ -75,10 +75,10 @@
     "@types/morgan": "^1.9.10",
     "cross-env": "^10.1.0",
     "electron": "^40.0.0",
-    "electron-builder": "^26.4.0",
+    "electron-builder": "^26.8.1",
     "electronmon": "^2.0.4",
     "license-checker": "^25.0.1",
-    "nodemon": "^3.1.11",
+    "nodemon": "^3.1.14",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
